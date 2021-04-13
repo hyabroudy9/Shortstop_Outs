@@ -1,0 +1,71 @@
+library(readxl)
+shortstopdefense <- read_excel("/Users/haileyemma/Documents/JObs/Blue Jays/shortstopdefense.xlsx")
+
+library("dplyr", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
+library("stringr", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
+library("data.table", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
+library("scales", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
+
+## code for making leaderboard
+unique(shortstopdefense$eventtype)
+
+shortdef <- data.frame(shortstopdefense$id, shortstopdefense$playerid, shortstopdefense$eventtype, shortstopdefense$fielded_pos, shortstopdefense$fieldingplay, shortstopdefense$fielded_scoring)
+
+shortdef <- filter(shortdef, shortstopdefense.eventtype == "field_out" | shortstopdefense.eventtype == "force_out" | shortstopdefense.eventtype == "sac_bunt" | shortstopdefense.eventtype == "fielders_choice_out" | shortstopdefense.eventtype == "double_play" | shortstopdefense.eventtype == "triple_play" | shortstopdefense.eventtype == "grounded_into_double_play" | shortstopdefense.eventtype == "fielders_choice")
+
+unique(shortdef$shortstopdefense.fielded_scoring)
+
+shortdef <- filter(shortdef, shortstopdefense.fielded_scoring == "f_assist" | shortstopdefense.fielded_scoring == "f_putout" | shortstopdefense.fielded_scoring == "")
+
+shortdef <- shortdef[shortdef$shortstopdefense.fieldingplay %like% "6", ]
+
+playercount <- shortdef %>% group_by(shortstopdefense.playerid) %>% tally()
+mean(playercount[["n"]])
+leaders <- playercount %>% filter(n > mean(n))
+
+leaders <- leaders[order(-leaders$n),]
+names(leaders)[names(leaders) == "shortstopdefense.playerid"] <- "playerid"
+names(leaders)[names(leaders) == "n"] <- "Number_Outs"
+
+opps <- shortstopdefense[shortstopdefense$fieldingplay %like% "6", ]
+opscount <- opps %>% group_by(playerid) %>% tally()
+names(opscount)[names(opscount) == "n"] <- "Opprotunities"
+
+OutsAboveAverage <- (leaders$Number_Outs - 48)
+leaders <- cbind(leaders, OutsAboveAverage)
+
+leaderboard <- leaders %>% full_join(opscount, by ="playerid")
+leaderboard <- na.omit(leaderboard)
+View(leaderboard)
+
+## throwing error code
+
+throwing <- data.frame(shortstopdefense$id, shortstopdefense$playerid, shortstopdefense$eventtype, shortstopdefense$fielded_pos, shortstopdefense$fieldingplay, shortstopdefense$fielded_scoring)
+throwing <- filter(throwing, shortstopdefense$fielded_scoring == "f_throwing_error")
+throwing <- throwing[throwing$shortstopdefense.fieldingplay %like% "6", ]
+throwcount <- throwing %>% group_by(shortstopdefense.playerid) %>% tally()
+throwcount <- throwcount[order(-throwcount$n),]
+names(throwcount)[names(throwcount) == "shortstopdefense.playerid"] <- "playerid"
+names(throwcount)[names(throwcount) == "n"] <- "throwing_errors"
+throwcount <- throwcount %>% full_join(opscount, by ="playerid")
+throwcount <- na.omit(throwcount)
+error_percentage <- (throwcount$throwing_errors / throwcount$Opprotunities)
+error_percentage <- percent(error_percentage)
+throwcount <- cbind(throwcount, error_percentage)
+throwcount
+
+## fielding error code
+
+fielding <- data.frame(shortstopdefense$id, shortstopdefense$playerid, shortstopdefense$eventtype, shortstopdefense$fielded_pos, shortstopdefense$fieldingplay, shortstopdefense$fielded_scoring)
+fielding <- filter(fielding, shortstopdefense$fielded_scoring == "f_fielding_error")
+fielding <- fielding[fielding$shortstopdefense.fieldingplay %like% "6", ]
+fieldcount <- fielding %>% group_by(shortstopdefense.playerid) %>% tally()
+fieldcount <- fieldcount[order(-fieldcount$n),]
+names(fieldcount)[names(fieldcount) == "shortstopdefense.playerid"] <- "playerid"
+names(fieldcount)[names(fieldcount) == "n"] <- "fielding_errors"
+fieldcount <- fieldcount %>% full_join(opscount, by ="playerid")
+fieldcount <- na.omit(fieldcount)
+error_percentage <- (fieldcount$fielding_errors / fieldcount$Opprotunities)
+error_percentage <- percent(error_percentage)
+fieldcount <- cbind(fieldcount, error_percentage)
+fieldcount
