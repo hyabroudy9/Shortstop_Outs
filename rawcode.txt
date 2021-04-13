@@ -1,5 +1,5 @@
 library(readxl)
-shortstopdefense <- read_excel("/Users/haileyemma/Documents/JObs/Blue Jays/shortstopdefense.xlsx")
+shortstopdefense <- read_excel("/Users/haileyemma/Documents/JObs/shortstopdefense.xlsx")
 
 library("dplyr", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
 library("stringr", lib.loc="/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
